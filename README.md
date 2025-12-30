@@ -22,7 +22,7 @@ For the SAT solver portion, you need the _python-sat_ library.
 To install it run the following command in your terminal:
 > pip install python-sat
 
-More simply, to obtain all the dependencies and recreate the same environment I used run:
+More simply, to obtain all the dependencies and recreate the same environment I used, run:
 > pip install -r requirements.txt
 
 ## How to run? 
