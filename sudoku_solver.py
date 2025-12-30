@@ -50,7 +50,7 @@ class SudokuProblem(SearchProblem):
         grid = state.grid
         n = state.n
         
-        # MRV Heuristic for Variable Selection (Corner case optimization)
+        # MRV Heuristic for Variable Selection
         best_idx, best_candidates, min_len = -1, None, n + 1
         
         for i in range(n * n):
@@ -60,8 +60,8 @@ class SudokuProblem(SearchProblem):
                     min_len = len(candidates)
                     best_idx = i
                     best_candidates = candidates
-                if min_len == 0: return [] # Dead end (Corner case: immediate failure)
-                if min_len == 1: break # Forced move (Optimization)
+                if min_len == 0: return [] # Dead end
+                if min_len == 1: break # Forced move
 
         if best_idx == -1: return [] 
 
@@ -90,7 +90,7 @@ class SudokuProblem(SearchProblem):
         return [v for v in range(1, n + 1) if v not in used]
 
 # ==========================================
-# PART 2: A* IMPLEMENTATION (Enhanced)
+# PART 2: A* IMPLEMENTATION
 # ==========================================
 
 class Node:
@@ -102,9 +102,6 @@ class Node:
     def __lt__(self, other): return self.f < other.f
 
 def a_star_search(problem: SearchProblem, max_nodes=50000):
-    """
-    Generalized A* Search with Metrics.
-    """
     start_time = time.time()
     initial_state = problem.get_initial_state()
     frontier = []
@@ -126,7 +123,6 @@ def a_star_search(problem: SearchProblem, max_nodes=50000):
         
         node = heapq.heappop(frontier)
         
-        # Corner Case: Duplicate Elimination
         if node.state in explored: continue
         explored.add(node.state)
 
@@ -142,7 +138,6 @@ def a_star_search(problem: SearchProblem, max_nodes=50000):
                 "solution": node.state
             }
         
-        # Corner Case: Resource limits
         if nodes_expanded >= max_nodes:
             avg_b = total_b / nodes_expanded if nodes_expanded > 0 else 0
             return {
@@ -158,7 +153,7 @@ def a_star_search(problem: SearchProblem, max_nodes=50000):
         nodes_expanded += 1
         successors = problem.get_successors(node.state)
         
-        # Branching Metrics Update
+        # Branching Metrics
         b_factor = len(successors)
         nodes_generated += b_factor
         total_b += b_factor
@@ -196,7 +191,9 @@ class SudokuSAT:
     def _var(self, r, c, v): return r*self.n*self.n + c*self.n + v
     
     def solve(self):
-        if not PYSAT_AVAILABLE: return {"status": "Skipped", "time": 0, "vars": 0, "clauses": 0}
+        if not PYSAT_AVAILABLE: 
+            return {"status": "Skipped", "time": 0, "vars": 0, "clauses": 0, "conflicts": 0, "decisions": 0, "propagations": 0}
+        
         start_time = time.time()
         
         # 1. Generate Clauses
@@ -235,6 +232,10 @@ class SudokuSAT:
         self.solver.append_formula(self.cnf.clauses)
         success = self.solver.solve()
         
+        # Get Internal Solver Stats (The new metric!)
+        stats = self.solver.accum_stats() 
+        # stats is dict like: {'restarts': 1, 'conflicts': 0, 'decisions': 122, 'propagations': 1560}
+
         res_grid = [0]*81
         if success:
             model = self.solver.get_model()
@@ -250,10 +251,13 @@ class SudokuSAT:
             "time": time.time()-start_time,
             "vars": self.solver.nof_vars(),
             "clauses": self.solver.nof_clauses(),
+            "conflicts": stats.get('conflicts', 0),
+            "decisions": stats.get('decisions', 0),
+            "propagations": stats.get('propagations', 0),
             "solution": "".join(map(str, res_grid)) if success else None
         }
 
-def print_grid(grid_obj, title="Grid"):
+def print_grid_pretty(grid_obj, title="Grid"):
     if hasattr(grid_obj, 'grid'): grid_str = "".join(map(str, grid_obj.grid))
     elif isinstance(grid_obj, str): grid_str = grid_obj
     else: return
@@ -269,14 +273,13 @@ def print_grid(grid_obj, title="Grid"):
     print("-" * 21)
 
 if __name__ == "__main__":
-    # Example Single Run for testing Task 1 and 2
     hard_puzzle = "4.....8.5.3..........7......2.....6.....8.4......1.......6.3.7.5..2.....1.4......"
     print("Running Single Instance Test:")
     prob = SudokuProblem(hard_puzzle)
     res = a_star_search(prob)
-    print_grid(prob.initial_state, "Input")
+    print_grid_pretty(prob.initial_state, "Input")
     if res['solution']:
-        print_grid(res['solution'], "Output")
+        print_grid_pretty(res['solution'], "Output")
         print(f"Solved in {res['time']:.4f}s with {res['nodes_expanded']} nodes.")
     else:
         print("Could not solve.")
