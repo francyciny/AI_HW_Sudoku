@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from sudoku_solver import SudokuProblem, SudokuSAT, a_star_search, PYSAT_AVAILABLE, print_grid_pretty
+from sudoku_solver import SudokuProblem, SudokuSAT, a_star_search, PYSAT_AVAILABLE, print_grid
 
 def run_benchmarks():
     puzzles = [
@@ -16,11 +16,11 @@ def run_benchmarks():
         ("Hard 1", "000600400700003600000091080000000000050180003000306045040200060903000000020000100"),
         ("Hard 2", "200300000804062003013800200000020390507000621032006000020009140601250809000001002"),
         ("Hard 3", "000000000000003085001020000000507000004000100090000000500000073002010000000040009"),
-        # Hardest
+        # Expert
         ("Expert 1", "4.....8.5.3..........7......2.....6.....8.4......1.......6.3.7.5..2.....1.4......"),
         ("Expert 2", "85...24..72......9..4.........1.7..23.5...9...4...........8..7..17..........36.4."),
         ("Expert 3", "005300000800000020070010500400005300010070006003200080060500009004000030000009700"),
-        # Corner Cases
+        # Corner cases
         ("Unsolvable 1", "553020600900305001001806400008102900700000008006708200002609500800203009005010300"),
         ("Unsolvable 2", "11..............................................................................."),
     ]
@@ -40,7 +40,7 @@ def run_benchmarks():
     for name, p_str in puzzles:
         results["names"].append(name)
         
-        # Calculate Clues (Problem Density)
+        # Calculate clues (problem density: number of filled cells at initial state)
         clues = sum(1 for c in p_str if c.isdigit() and c != '0')
         results["clues"].append(clues)
         
@@ -71,8 +71,8 @@ def run_benchmarks():
         print(f"{name:<15} | {clues:<5} | {res_a['time']:.4f}s  | {res_s['time']:.4f}s  | {res_a['nodes_expanded']:<8} | {status_str}")
         
         if name == "Expert 1":
-            print_grid_pretty(prob.initial_state, f"Initial ({name})")
-            if res_a['solution']: print_grid_pretty(res_a['solution'], "A* Solution")
+            print_grid(prob.initial_state, f"Initial ({name})")
+            if res_a['solution']: print_grid(res_a['solution'], "A* Solution")
 
     return results
 
@@ -81,10 +81,10 @@ def plot_metrics(res):
     x = np.arange(len(names))
     width = 0.35
 
-    # Figure 1: Time & Expanded Nodes
+    # Time & Expanded Nodes
     fig1, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10))
     
-    # Plot 1.1: Time
+    # Time
     ax1.bar(x - width/2, res["astar_time"], width, label='A*', color='skyblue')
     ax1.bar(x + width/2, res["sat_time"], width, label='SAT', color='orange')
     ax1.set_title('Running Time (A* vs SAT)')
@@ -94,7 +94,7 @@ def plot_metrics(res):
     ax1.legend()
     ax1.set_yscale('log')
 
-    # Plot 1.2: A* Search Space
+    # A* Search Space
     ax2.bar(x, res["astar_expanded"], width, label='Nodes Expanded', color='lightgreen')
     ax2.set_title('A* Search Effort (Nodes Expanded)')
     ax2.set_ylabel('Count')
@@ -105,7 +105,7 @@ def plot_metrics(res):
     plt.tight_layout()
     plt.show()
 
-    # Figure 2: Branching & Memory
+    # Branching & Memory
     fig2, (ax3, ax4) = plt.subplots(2, 1, figsize=(12, 10))
     ax3.plot(x, res["b_avg"], marker='o', label='Avg Branching', color='purple')
     ax3.fill_between(x, res["b_min"], res["b_max"], color='purple', alpha=0.1, label='Min-Max Range')
@@ -121,11 +121,11 @@ def plot_metrics(res):
     plt.tight_layout()
     plt.show()
 
-    # Figure 3: SAT Detailed Metrics
+    # SAT Detailed Metrics
     if any(res["sat_vars"]):
         fig3, (ax5, ax6) = plt.subplots(2, 1, figsize=(12, 10))
         
-        # Plot 3.1: Work Done (Conflicts & Decisions)
+        # Work Done (Conflicts & Decisions)
         ax5.bar(x - width/2, res["sat_decisions"], width, label='Decisions', color='gold')
         ax5.bar(x + width/2, res["sat_conflicts"], width, label='Conflicts', color='red')
         ax5.set_title('SAT Solver "Effort" (Decisions vs Conflicts)')
@@ -134,7 +134,7 @@ def plot_metrics(res):
         ax5.legend()
         ax5.set_yscale('log')
 
-        # Plot 3.2: Difficulty vs Time
+        # Difficulty vs Time
         clues = np.array(res["clues"])
         times = np.array(res["astar_time"])
         ax6.scatter(clues, times, c='blue', s=100, alpha=0.7)

@@ -4,7 +4,7 @@ import math
 from abc import ABC, abstractmethod
 from typing import List, Tuple, Any
 
-# Try to import PySAT.
+# Try to import PySAT
 try:
     from pysat.solvers import Glucose3
     from pysat.formula import CNF
@@ -12,9 +12,7 @@ try:
 except ImportError:
     PYSAT_AVAILABLE = False
 
-# ==========================================
-# PART 1: GENERALIZED PROBLEM MODELING
-# ==========================================
+# GENERALIZED PROBLEM MODELING
 
 class SearchProblem(ABC):
     @abstractmethod
@@ -49,8 +47,8 @@ class SudokuProblem(SearchProblem):
     def get_successors(self, state: SudokuState) -> List[Tuple[SudokuState, str, float]]:
         grid = state.grid
         n = state.n
-        
-        # MRV Heuristic for Variable Selection
+
+        # MRV heuristic for variable selection
         best_idx, best_candidates, min_len = -1, None, n + 1
         
         for i in range(n * n):
@@ -89,9 +87,7 @@ class SudokuProblem(SearchProblem):
                 used.add(grid[r * n + c])
         return [v for v in range(1, n + 1) if v not in used]
 
-# ==========================================
-# PART 2: A* IMPLEMENTATION
-# ==========================================
+# A* IMPLEMENTATION
 
 class Node:
     def __init__(self, state, parent=None, action=None, g=0.0, h=0.0):
@@ -112,8 +108,8 @@ def a_star_search(problem: SearchProblem, max_nodes=50000):
     nodes_expanded = 0
     nodes_generated = 0
     max_memory = 0
-    
-    # Branching Factor Metrics
+
+    # Branching factor metrics
     min_b = float('inf')
     max_b = 0
     total_b = 0
@@ -152,8 +148,8 @@ def a_star_search(problem: SearchProblem, max_nodes=50000):
 
         nodes_expanded += 1
         successors = problem.get_successors(node.state)
-        
-        # Branching Metrics
+
+        # Branching metrics update
         b_factor = len(successors)
         nodes_generated += b_factor
         total_b += b_factor
@@ -176,9 +172,7 @@ def a_star_search(problem: SearchProblem, max_nodes=50000):
         "solution": None
     }
 
-# ==========================================
-# PART 3: SAT SOLVER
-# ==========================================
+# SAT SOLVER
 
 class SudokuSAT:
     def __init__(self, puzzle_string: str, n: int = 9):
@@ -195,8 +189,8 @@ class SudokuSAT:
             return {"status": "Skipped", "time": 0, "vars": 0, "clauses": 0, "conflicts": 0, "decisions": 0, "propagations": 0}
         
         start_time = time.time()
-        
-        # 1. Generate Clauses
+
+        # Generate clauses
         # One number per cell
         for r in range(self.n):
             for c in range(self.n):
@@ -205,7 +199,7 @@ class SudokuSAT:
                     for v2 in range(v1 + 1, self.n + 1):
                         self.cnf.append([-self._var(r, c, v1), -self._var(r, c, v2)])
 
-        # Constraints (Row, Col, Box)
+        # Constraints (row, col, box)
         for v in range(1, self.n + 1):
             for k in range(self.n):
                 self.cnf.append([self._var(k, c, v) for c in range(self.n)])
@@ -232,9 +226,8 @@ class SudokuSAT:
         self.solver.append_formula(self.cnf.clauses)
         success = self.solver.solve()
         
-        # Get Internal Solver Stats (The new metric!)
-        stats = self.solver.accum_stats() 
         # stats is dict like: {'restarts': 1, 'conflicts': 0, 'decisions': 122, 'propagations': 1560}
+        stats = self.solver.accum_stats()
 
         res_grid = [0]*81
         if success:
@@ -257,7 +250,7 @@ class SudokuSAT:
             "solution": "".join(map(str, res_grid)) if success else None
         }
 
-def print_grid_pretty(grid_obj, title="Grid"):
+def print_grid(grid_obj, title="Grid"):
     if hasattr(grid_obj, 'grid'): grid_str = "".join(map(str, grid_obj.grid))
     elif isinstance(grid_obj, str): grid_str = grid_obj
     else: return
@@ -274,12 +267,12 @@ def print_grid_pretty(grid_obj, title="Grid"):
 
 if __name__ == "__main__":
     hard_puzzle = "4.....8.5.3..........7......2.....6.....8.4......1.......6.3.7.5..2.....1.4......"
-    print("Running Single Instance Test:")
+    print("Running single instance test:")
     prob = SudokuProblem(hard_puzzle)
     res = a_star_search(prob)
-    print_grid_pretty(prob.initial_state, "Input")
+    print_grid(prob.initial_state, "Input")
     if res['solution']:
-        print_grid_pretty(res['solution'], "Output")
+        print_grid(res['solution'], "Output")
         print(f"Solved in {res['time']:.4f}s with {res['nodes_expanded']} nodes.")
     else:
         print("Could not solve.")
