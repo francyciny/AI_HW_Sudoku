@@ -28,5 +28,7 @@ More simply, to obtain all the dependencies and recreate the same environment I 
 Once the above library is sucessfully installed run the following command in the terminal to run the code:
 > python sudoku_solver.py
 The script includes a "Main" section that runs a classic Norvig benchmark instance using both algorithms and prints the metrics.
-To test the solver with different instances of the problem, just change the main portion of the code at "hard_puzzle=" and run again. 
-See the report for further clarifications. 
+To test the solver with different instances of the problem, just change the "main" portion of the code at "hard_puzzle=" and run again. 
+The file "sudoku_metrics.py" inherits some functions from the above mentioned file to produce the logic for plotting metrics. This file was used to generate the plots for the report. 
+
+**See the report for further clarifications.** 
